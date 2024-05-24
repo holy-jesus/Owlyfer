@@ -55,10 +55,13 @@ async def suggest_post_process(message: Message, state: FSMContext):
         post_id = db.Posts.add(message.from_user.id, message.html_text or None)
     else:
         post_id = data["post_id"]
-        
+    
     media_group_id = data.get("media_group_id", message.media_group_id)
-    if media_group_id != message.media_group_id:
+    if message.html_text:
+        db.Posts.update(post_id, message.html_text)
+    if message.media_group_id is None or message.media_group_id != media_group_id:
         db.PostFiles.delete(post_id)
+
     await state.update_data(media_group_id=message.media_group_id, post_id=post_id)
     match message.content_type:
         case ContentType.PHOTO:

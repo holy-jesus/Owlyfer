@@ -259,7 +259,7 @@ class DBWorker:
             Args:
                 post_id (int): ID поста
             """
-            DBWorker.execute("UPDATE posts SET post_text = ? WHERE id = ?", (post_id, post_text))
+            DBWorker.execute("UPDATE posts SET post_text = ? WHERE id = ?", (post_text, post_id))
 
         def suggest(post_id: int):
             """Принять пост в обработку

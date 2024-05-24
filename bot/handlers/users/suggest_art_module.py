@@ -55,9 +55,10 @@ async def suggest_post_process(message: Message, state: FSMContext):
         post_id = db.Posts.add(message.from_user.id, message.html_text or None)
     else:
         post_id = data["post_id"]
-        
+    
     media_group_id = data.get("media_group_id", message.media_group_id)
-    if media_group_id != message.media_group_id:
+    if (message.media_group_id is None or message.media_group_id != media_group_id) and message.html_text:
+        db.Posts.update(post_id, message.html_text)
         db.PostFiles.delete(post_id)
     await state.update_data(media_group_id=message.media_group_id, post_id=post_id)
     match message.content_type:
@@ -67,8 +68,6 @@ async def suggest_post_process(message: Message, state: FSMContext):
             db.PostFiles.add(post_id, message.document.file_id, "doc")
         case ContentType.VIDEO:
             db.PostFiles.add(post_id, message.video.file_id, "vid")
-        case ContentType.AUDIO:
-            db.PostFiles.add(post_id, message.audio.file_id, "mus")
 
 
 @dp.message(SuggestPostState.get_post, F.text == button_next.text)
