@@ -1,7 +1,7 @@
 from aiogram import F
 from emoji import emojize
 from aiogram.types import CallbackQuery, InlineKeyboardButton
-from aiogram.exceptions import AiogramError
+from aiogram.exceptions import AiogramError, TelegramBadRequest
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from utils.posts_worker import (
@@ -196,3 +196,22 @@ async def accept_post_send_later(query: CallbackQuery, callback_data: post_selec
             Logger.error(ex)
             continue
     db.AdminPostStates.delete(post_id)
+
+
+@dp.callback_query(IsAdmin)
+async def legacy_support(query: CallbackQuery):
+    actions = {
+        "decline": decline_post,
+        "ban": ban_user_and_decline_post,
+        "accept": accept_post,
+        "break": back_to_select_post_action,
+        "send_now": accept_post_send_now,
+        "send_later": accept_post_select_time,
+    }
+    if query.data.count(":") != 2:
+        return
+    _, post_id, action = query.data.split(":")
+    callback_data = post_vote(post_id=int(post_id), action=action, disable_notification=True)
+    if action not in actions:
+        return
+    await actions[action](query, callback_data)
