@@ -24,15 +24,15 @@ keyboard_next_stop = (
 # Главное меню юзера
 
 button_create_post = KeyboardButton(text=emojize(":incoming_envelope: Предложить пост"))
-button_create_art = KeyboardButton(
-    text=emojize(":artist_palette: Предложить арт на донат")
-)
+# button_create_art = KeyboardButton(
+#     text=emojize(":artist_palette: Предложить арт на донат")
+# )
 button_user_help = KeyboardButton(text=emojize(":thinking_face: Справка"))
 button_about_bot = KeyboardButton(text=emojize(":owl: О боте"))
 
 keyboard_main = (
     ReplyKeyboardBuilder()
-    .add(button_create_post, button_create_art, button_user_help, button_about_bot)
+    .add(button_create_post, button_user_help, button_about_bot)
     .adjust(1, repeat=True)
     .as_markup(resize_keyboard=True)
 )
