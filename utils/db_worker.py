@@ -269,15 +269,16 @@ class DBWorker:
             """
             DBWorker.execute("UPDATE posts SET state = 'suggested' WHERE id = ?", (post_id, ))
         
-        def accept(post_id: int, send_date: datetime.datetime):
+        def accept(post_id: int, send_date: datetime.datetime, disable_notification: bool):
             """Отправить пост в отложенную отправку
 
             Args:
                 post_id (int): ID поста
                 send_date (datetime.datetime): Время отправления
+                disable_notification (bool): Отключить уведомление о посте
             """
             send_time = send_date.strftime("%d-%m-%Y %H:%M")
-            DBWorker.execute("UPDATE posts SET send_date = ?, state = 'accept' WHERE id = ?", (send_time, post_id))
+            DBWorker.execute("UPDATE posts SET send_date = ?, state = 'accept', disable_notification = ? WHERE id = ?", (send_time, disable_notification, post_id))
 
         def delete(post_id: int):
             """Удаление поста из БД

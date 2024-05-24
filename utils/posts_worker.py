@@ -21,11 +21,14 @@ from utils.settings_loader import CHANNEL_ID
 class post_vote(CallbackData, prefix="pv"):
     post_id: int
     action: str
+    disable_notification: bool = True
+
 
 class post_select_time(CallbackData, prefix="pst"):
     post_id: int
     hour: int
     action: str
+    disable_notification: bool = True
 
 
 def create_post_buttons(post_id: int):
@@ -117,12 +120,13 @@ async def send_post_to_admins(post_id: int):
             continue
 
 
-async def send_post_to_channel(post_id: int):
+async def send_post_to_channel(post_id: int, disable_notification: bool = True):
     """
     Отправляет одобренный пост в канал
 
     Args:
         post_id (int): ID поста
+        disable_notification (bool): Отключает уведомление
     """
     post = db.Posts.get(post_id)
     user_tg_id = db.Users.get_by_db_id(post[1])
@@ -136,25 +140,25 @@ async def send_post_to_channel(post_id: int):
         )
     media_group = await create_media_group_to_post(post_id, post_text)
     if media_group == None:
-        await bot.send_message(CHANNEL_ID, post_text)
+        await bot.send_message(CHANNEL_ID, post_text, disable_notification=disable_notification)
     else:
-        await bot.send_media_group(CHANNEL_ID, media_group)
+        await bot.send_media_group(CHANNEL_ID, media_group, disable_notification=disable_notification)
     db.Posts.delete(post_id)
 
 
-async def set_delayed_post_send(post_id: int, hour: int):
+async def set_delayed_post_send(post_id: int, hour: int, disable_notification: bool):
     send_date = datetime.datetime.now() + datetime.timedelta(hours=hour)
-    db.Posts.accept(post_id, send_date)
+    db.Posts.accept(post_id, send_date, disable_notification)
 
 
 async def send_delayed_posts():
     while True:
         delayed_posts = db.Posts.get_with_timer()
         if delayed_posts != None:
-            for i in delayed_posts:
-                if i[3] == "accept":
-                    send_date = datetime.datetime.strptime(i[4], "%d-%m-%Y %H:%M")
+            for post in delayed_posts:
+                if post[3] == "accept":
+                    send_date = datetime.datetime.strptime(post[4], "%d-%m-%Y %H:%M")
                     if send_date <= datetime.datetime.now():
-                        await send_post_to_channel(i[0])
-                        db.Posts.delete(i[0])
-        await asyncio.sleep(1800)
+                        await send_post_to_channel(post[0], post[5])
+                        db.Posts.delete(post[0])
+        await asyncio.sleep(300)

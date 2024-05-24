@@ -41,7 +41,7 @@ async def suggest_post_break(message: Message, state: FSMContext):
     if "post_id" in data:
         db.Posts.delete(data["post_id"])
     await message.answer("Отмена отправки поста", reply_markup=keyboard_main)
-    await state.clear(None)
+    await state.clear()
 
 
 @dp.message(

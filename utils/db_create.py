@@ -59,6 +59,7 @@ def create_database():
                             post_text TEXT,
                             state TEXT NOT NULL,
                             send_date TEXT,
+                            disable_notification BOOLEAN,
                             FOREIGN KEY (user_id) REFERENCES users (id)
                         )"""
         )

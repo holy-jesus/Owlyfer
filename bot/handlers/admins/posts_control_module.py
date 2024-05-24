@@ -16,37 +16,42 @@ from utils.log_worker import Logger
 from .admin_filter import IsAdmin
 
 
-def create_hour_selection(post_id: int):
+def create_hour_selection(post_id: int, disable_notification: bool):
     keyboard_select_time = InlineKeyboardBuilder()
     for i in range(1, 13):
         keyboard_select_time.button(
             text=emojize(f":timer_clock: {i}"),
             callback_data=post_select_time(
-                post_id=post_id, action="send", hour=i
+                post_id=post_id, action="send", hour=i, disable_notification=disable_notification
             ).pack(),
         )
     keyboard_select_time.button(
         text="Отмена",
-        callback_data=post_vote(action="break", post_id=post_id).pack(),
+        callback_data=post_vote(action="break", post_id=post_id, disable_notification=disable_notification).pack(),
     )
     return keyboard_select_time.adjust(6, 6, 1).as_markup()
 
 
-def create_time_selection(post_id: int):
+def create_time_selection(post_id: int, disable_notification: bool):
     button_send_now = InlineKeyboardButton(
         text="Сейчас",
-        callback_data=post_vote(action="send_now", post_id=post_id).pack(),
+        callback_data=post_vote(action="send_now", post_id=post_id, disable_notification=disable_notification).pack(),
     )
     button_send_later = InlineKeyboardButton(
         text="Позже",
-        callback_data=post_vote(action="send_later", post_id=post_id).pack(),
+        callback_data=post_vote(action="send_later", post_id=post_id, disable_notification=disable_notification).pack(),
     )
     button_cancel = InlineKeyboardButton(
-        text="Отмена", callback_data=post_vote(action="break", post_id=post_id).pack()
+        text="Отмена", callback_data=post_vote(action="break", post_id=post_id, disable_notification=disable_notification).pack()
+    )
+    button_disable_notification = InlineKeyboardButton(
+        text="Включить звук" if disable_notification else "Выключить звук",
+        callback_data=post_vote(action="accept", post_id=post_id, disable_notification=not disable_notification).pack(),
     )
     return (
         InlineKeyboardBuilder()
-        .add(button_send_now, button_send_later, button_cancel)
+        .add(button_send_now, button_send_later, button_cancel, button_disable_notification)
+        .adjust(3, 1)
         .as_markup()
     )
 
@@ -58,9 +63,9 @@ async def decline_post(query: CallbackQuery, callback_data: post_vote):
     admin_nick = db.Admins.get_nick(query.from_user.id)
     for i in admin_list:
         try:
-            msg_id = db.AdminPostStates.get_msg_id(post_id, i[0])
+            message_id = db.AdminPostStates.get_msg_id(post_id, i[0])
             await bot.edit_message_text(
-                f"{admin_nick} отклонил(а) пост", i[1], msg_id, reply_markup=None
+                f"{admin_nick} отклонил(а) пост", i[1], message_id, reply_markup=None
             )
         except AiogramError as ex:
             Logger.error(ex)
@@ -84,11 +89,11 @@ async def ban_user_and_decline_post(query: CallbackQuery, callback_data: post_vo
     admin_nick = db.Admins.get_nick(query.from_user.id)
     for i in admin_list:
         try:
-            msg_id = db.AdminPostStates.get_msg_id(post_id, i[0])
+            message_id = db.AdminPostStates.get_msg_id(post_id, i[0])
             await bot.edit_message_text(
                 f"{admin_nick} отклонил(а) пост и забанил(а) {user.first_name}",
                 i[1],
-                msg_id,
+                message_id,
                 reply_markup=None,
             )
         except AiogramError as ex:
@@ -105,13 +110,13 @@ async def ban_user_and_decline_post(query: CallbackQuery, callback_data: post_vo
 @dp.callback_query(IsAdmin, post_vote.filter(F.action == "accept"))
 async def accept_post(query: CallbackQuery, callback_data: post_vote):
     post_id = callback_data.post_id
-    keyboard_send_time = create_time_selection(post_id)
+    keyboard_send_time = create_time_selection(post_id, callback_data.disable_notification)
     admin_id = db.Admins.get_by_tg_id(query.from_user.id)
-    msg_id = db.AdminPostStates.get_msg_id(post_id, admin_id)
+    message_id = db.AdminPostStates.get_msg_id(post_id, admin_id)
     await bot.edit_message_text(
-        "Когда отправить пост?",
+        f"Когда отправить пост? Сообщение отправится {'без звука' if callback_data.disable_notification else 'со звуком'}.",
         query.from_user.id,
-        msg_id,
+        message_id,
         reply_markup=keyboard_send_time,
     )
 
@@ -121,11 +126,11 @@ async def back_to_select_post_action(query: CallbackQuery, callback_data: post_v
     post_id = callback_data.post_id
     keyboard_post_vote = create_post_buttons(post_id)
     admin_id = db.Admins.get_by_tg_id(query.from_user.id)
-    msg_id = db.AdminPostStates.get_msg_id(post_id, admin_id)
+    message_id = db.AdminPostStates.get_msg_id(post_id, admin_id)
     await bot.edit_message_text(
         "Что сделать с постом?",
         query.from_user.id,
-        msg_id,
+        message_id,
         reply_markup=keyboard_post_vote,
     )
 
@@ -135,7 +140,7 @@ async def accept_post_send_now(query: CallbackQuery, callback_data: post_vote):
     post_id = callback_data.post_id
     post = db.Posts.get(post_id)
     user_tg_id = db.Users.get_by_db_id(post[1])
-    await send_post_to_channel(post_id)
+    await send_post_to_channel(post_id, callback_data.disable_notification)
     admin_list = db.Admins.get_all()
     admin_nick = db.Admins.get_nick(query.from_user.id)
     await bot.send_message(
@@ -143,9 +148,9 @@ async def accept_post_send_now(query: CallbackQuery, callback_data: post_vote):
     )
     for i in admin_list:
         try:
-            msg_id = db.AdminPostStates.get_msg_id(post_id, i[0])
+            message_id = db.AdminPostStates.get_msg_id(post_id, i[0])
             await bot.edit_message_text(
-                f"{admin_nick} принял(а) пост", i[1], msg_id, reply_markup=None
+                f"{admin_nick} принял(а) пост", i[1], message_id, reply_markup=None
             )
         except AiogramError as ex:
             Logger.error(ex)
@@ -157,13 +162,13 @@ async def accept_post_send_now(query: CallbackQuery, callback_data: post_vote):
 @dp.callback_query(IsAdmin, post_vote.filter(F.action == "send_later"))
 async def accept_post_select_time(query: CallbackQuery, callback_data: post_vote):
     post_id = callback_data.post_id
-    keyboard_select_time = create_hour_selection(post_id)
+    keyboard_select_time = create_hour_selection(post_id, callback_data.disable_notification)
     admin_tg_id = db.Admins.get_by_tg_id(query.from_user.id)
-    msg_id = db.AdminPostStates.get_msg_id(post_id, admin_tg_id)
+    message_id = db.AdminPostStates.get_msg_id(post_id, admin_tg_id)
     await bot.edit_message_text(
         "Через сколько часов отправить пост?",
         query.from_user.id,
-        msg_id,
+        message_id,
         reply_markup=keyboard_select_time,
     )
 
@@ -172,7 +177,7 @@ async def accept_post_select_time(query: CallbackQuery, callback_data: post_vote
 async def accept_post_send_later(query: CallbackQuery, callback_data: post_select_time):
     post_id = callback_data.post_id
     hour = callback_data.hour
-    await set_delayed_post_send(post_id, hour)
+    await set_delayed_post_send(post_id, hour, callback_data.disable_notification)
     admin_list = db.Admins.get_all()
     admin_nick = db.Admins.get_nick(query.from_user.id)
     post = db.Posts.get(post_id)
