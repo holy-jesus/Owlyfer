@@ -65,7 +65,7 @@ async def decline_post(query: CallbackQuery, callback_data: post_vote):
         try:
             message_id = db.AdminPostStates.get_msg_id(post_id, i[0])
             await bot.edit_message_text(
-                f"{admin_nick} отклонил(а) пост", i[1], message_id, reply_markup=None
+                text=f"{admin_nick} отклонил(а) пост", chat_id=i[1], message_id=message_id, reply_markup=None
             )
         except AiogramError as ex:
             Logger.error(ex)
@@ -91,9 +91,9 @@ async def ban_user_and_decline_post(query: CallbackQuery, callback_data: post_vo
         try:
             message_id = db.AdminPostStates.get_msg_id(post_id, i[0])
             await bot.edit_message_text(
-                f"{admin_nick} отклонил(а) пост и забанил(а) {user.first_name}",
-                i[1],
-                message_id,
+                text=f"{admin_nick} отклонил(а) пост и забанил(а) {user.first_name}",
+                chat_id=i[1],
+                message_id=message_id,
                 reply_markup=None,
             )
         except AiogramError as ex:
@@ -114,9 +114,9 @@ async def accept_post(query: CallbackQuery, callback_data: post_vote):
     admin_id = db.Admins.get_by_tg_id(query.from_user.id)
     message_id = db.AdminPostStates.get_msg_id(post_id, admin_id)
     await bot.edit_message_text(
-        f"Когда отправить пост? Сообщение отправится {'без звука' if callback_data.disable_notification else 'со звуком'}.",
-        query.from_user.id,
-        message_id,
+        text=f"Когда отправить пост? Сообщение отправится {'без звука' if callback_data.disable_notification else 'со звуком'}.",
+        chat_id=query.from_user.id,
+        message_id=message_id,
         reply_markup=keyboard_send_time,
     )
 
@@ -128,9 +128,9 @@ async def back_to_select_post_action(query: CallbackQuery, callback_data: post_v
     admin_id = db.Admins.get_by_tg_id(query.from_user.id)
     message_id = db.AdminPostStates.get_msg_id(post_id, admin_id)
     await bot.edit_message_text(
-        "Что сделать с постом?",
-        query.from_user.id,
-        message_id,
+        text="Что сделать с постом?",
+        chat_id=query.from_user.id,
+        message_id=message_id,
         reply_markup=keyboard_post_vote,
     )
 
@@ -150,7 +150,7 @@ async def accept_post_send_now(query: CallbackQuery, callback_data: post_vote):
         try:
             message_id = db.AdminPostStates.get_msg_id(post_id, i[0])
             await bot.edit_message_text(
-                f"{admin_nick} принял(а) пост", i[1], message_id, reply_markup=None
+                text=f"{admin_nick} принял(а) пост", chat_id=i[1], message_id=message_id, reply_markup=None
             )
         except AiogramError as ex:
             Logger.error(ex)
@@ -166,9 +166,9 @@ async def accept_post_select_time(query: CallbackQuery, callback_data: post_vote
     admin_tg_id = db.Admins.get_by_tg_id(query.from_user.id)
     message_id = db.AdminPostStates.get_msg_id(post_id, admin_tg_id)
     await bot.edit_message_text(
-        "Через сколько часов отправить пост?",
-        query.from_user.id,
-        message_id,
+        text="Через сколько часов отправить пост?",
+        chat_id=query.from_user.id,
+        message_id=message_id,
         reply_markup=keyboard_select_time,
     )
 
@@ -187,9 +187,9 @@ async def accept_post_send_later(query: CallbackQuery, callback_data: post_selec
         try:
             msg_id = db.AdminPostStates.get_msg_id(post_id, i[0])
             await bot.edit_message_text(
-                f"{admin_nick} запланировал(а) отправку поста через {hour} час(ов)",
-                i[1],
-                msg_id,
+                text=f"{admin_nick} запланировал(а) отправку поста через {hour} час(ов)",
+                chat_id=i[1],
+                message_id=msg_id,
                 reply_markup=None,
             )
         except AiogramError as ex:
