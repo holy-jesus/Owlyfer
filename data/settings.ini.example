@@ -1,3 +1,9 @@
 [telegram]
 bot_token = 1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 channel_id = -1234567890123
+
+[mongodb]
+host = 127.0.0.1
+port = 27017
+username = 
+password = 
