@@ -13,7 +13,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     telegram_id: Mapped[int]
-    ban_state: Mapped[int]
+    ban_state: Mapped[bool] = mapped_column(default=False)
 
     posts: Mapped["Post"] = relationship(
         back_populates="user",

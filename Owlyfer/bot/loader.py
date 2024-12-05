@@ -13,6 +13,8 @@ from utils.settings_loader import (
     MONGODB_USERNAME,
     MONGODB_PASSWORD,
 )
+from db import DBSessionMiddleware, async_session_factory
+
 
 try:
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -24,6 +26,7 @@ try:
         connect=True,
     )
     dp = Dispatcher(storage=MongoStorage(client=client, db_name="owlyfer"))
+    dp.message.middleware(DBSessionMiddleware(async_session_factory))
     db = DBWorker()
 except Exception as ex:
     Logger.error(ex)

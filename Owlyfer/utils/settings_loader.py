@@ -1,11 +1,12 @@
 import configparser
+import traceback
 
 
 LOG_PATH = "logs/"
-SETTINGS_PATH = "data/settings.ini"
-DB_PATH = "data/database.db"
+SETTINGS_PATH = "settings.ini"
+DB_PATH = "database.db"
 
-#Загрузка настроек
+# Загрузка настроек
 try:
     config = configparser.ConfigParser(allow_no_value=True)
     config.read(SETTINGS_PATH)
@@ -16,6 +17,7 @@ try:
     MONGODB_PORT = int(config.get("mongodb", "port", fallback="27017"))
     MONGODB_USERNAME = config.get("mongodb", "username") or None
     MONGODB_PASSWORD = config.get("mongodb", "password") or None
-except:
+except Exception as e:
+    print(traceback.format_exc())
     print("Ошибка загрузки параметров, проверьте верность введенных данных")
     exit()

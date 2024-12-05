@@ -27,7 +27,7 @@
 
 TODO
 
-### Системно
+### TODO
 
 1. Создайте бота у [BotFather](https://t.me/BotFather).
 2. [Скачайте бота в браузере](https://github.com/holy-jesus/Owlyfer/archive/refs/heads/main.zip) ИЛИ склонируйте репозиторий командой ниже.

@@ -1,15 +1,22 @@
+from sqlalchemy import select
 from aiogram import F
 from aiogram.types import Message
 from aiogram.filters import CommandStart, Command
 
 from bot.keyboards import keyboard_main, button_user_help, button_about_bot
-from bot.loader import dp, db
+from bot.loader import dp
+from db import User, Session
 
 
 @dp.message(CommandStart())
-async def hello_message(message: Message):
-    if db.Users.get_by_tg_id(message.from_user.id) == None:
-        db.Users.add(message.from_user.id)
+async def hello_message(message: Message, session: Session):
+    # if db.Users.get_by_tg_id(message.from_user.id) == None:
+    #     db.Users.add(message.from_user.id)
+    result = (await session.execute(
+        select(User.telegram_id == message.from_user.id).limit(1)
+    )).scalar_one_or_none()
+    print(result)
+    return
     msg_text = db.MsgTemplates.get("welcome")
     msg_text = msg_text.replace("$USERNAME$", message.from_user.first_name)
     await message.answer(msg_text, reply_markup=keyboard_main)

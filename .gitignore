@@ -113,6 +113,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-database.db
+*.db
 settings.ini
 logs/
